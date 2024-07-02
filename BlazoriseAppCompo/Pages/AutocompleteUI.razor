@@ -1,0 +1,57 @@
+﻿@page "/autocomplete"
+@using BlazoriseAppCompo.Data
+@using GGAPost.Data.DbObject
+
+
+@inject DALService db
+
+<h3>Autocomplete Example</h3>
+@* <Autocomplete Items="items" OnSelected="HandleSelectedItem" name="Select Value" /> *@
+<Autocomplete sqlQuery=@sql OnSelected="HandleSelectedItem" name="Select Value" />
+
+
+<p>Selected Item: @selectedItem?.Text (@selectedItem?.Value)</p>
+
+<h5>Search Data With L,M and number</h5>
+
+
+@code {
+
+    DataTable dt = new DataTable();
+    string sql = "";
+
+    protected async override Task OnInitializedAsync()
+    {
+        // string sql1 = $@"SELECT * FROM dbo.product_model_tbl";
+        sql = $@"SELECT product_type_id Value,product_model Text FROM dbo.product_model_tbl WHERE product_model LIKE @searchKey";
+        // dt = db.GetDataTable(sql1);
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            string sql1 = $@"SELECT * FROM dbo.product_model_tbl";
+            dt = db.GetDataTable(sql1);
+            StateHasChanged();
+        }
+    }
+
+    private List<SuggestionItem> items = new List<SuggestionItem>
+    {
+        new SuggestionItem { Text = "Apple", Value = "1" },
+        new SuggestionItem { Text = "Banana", Value = "2" },
+        new SuggestionItem { Text = "Cherry", Value = "3" },
+        new SuggestionItem { Text = "Date", Value = "4" },
+        new SuggestionItem { Text = "Fig", Value = "5" },
+        new SuggestionItem { Text = "Grape", Value = "6" },
+        new SuggestionItem { Text = "Honeydew", Value = "7" }
+    };
+
+    private SuggestionItem selectedItem;
+
+    private void HandleSelectedItem(SuggestionItem item)
+    {
+        selectedItem = item;
+    }
+}

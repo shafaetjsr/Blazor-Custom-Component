@@ -1,0 +1,52 @@
+﻿@page "/table"
+
+<PageTitle>Table</PageTitle>
+
+<h3>Table with Pasignation</h3>
+
+<BlazoriseAppCompo.Component.TableComponent DataTable="dataTable" PageSize="10"></BlazoriseAppCompo.Component.TableComponent>
+
+@code {
+    private DataTable dataTable = new DataTable();
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+
+    protected override void OnInitialized()
+    {
+
+        // Add rows
+        
+        dataTable.Rows.Clear();
+
+        // Define columns
+        dataTable.Columns.Add("Serial", typeof(int));
+        dataTable.Columns.Add("Name", typeof(string));
+        dataTable.Columns.Add("Age", typeof(int));
+
+        // Generate random data
+        Random random = new Random();
+        for (int i = 1; i <= 5000; i++)
+        {
+            string name = GenerateRandomName(random);
+            int age = random.Next(20, 60); // Generate random age between 20 and 59
+
+            dataTable.Rows.Add(i, name, age);
+        }
+    }
+
+    private string GenerateRandomName(Random random)
+    {
+        string[] firstNames = { "John", "Jane", "Sam", "Anna", "Tom", "Emily", "Michael", "Emma", "William", "Olivia" };
+        string[] lastNames = { "Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor" };
+
+        string firstName = firstNames[random.Next(firstNames.Length)];
+        string lastName = lastNames[random.Next(lastNames.Length)];
+
+        return $"{firstName} {lastName}";
+    }
+    
+}

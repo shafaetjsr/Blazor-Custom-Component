@@ -1,0 +1,178 @@
+﻿@using System.Data
+@using Microsoft.AspNetCore.Components
+
+<div class="mt-2">
+    <input type="text" @bind="filterText" placeholder="Enter filter text..." @oninput="FilterData" />
+
+    <table class="table table-striped table-sm table-responsive table-bordered">
+        <thead>
+            <tr>
+                @foreach (DataColumn column in DataTable.Columns)
+                {
+                    <th>@column.ColumnName</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (DataRow row in PagedRows)
+            {
+                <tr>
+                    @foreach (var item in row.ItemArray)
+                    {
+                        <td>@item</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button @onclick="FirstPage" disabled="@IsFirstPage">First</button>
+        <button @onclick="PreviousPage" disabled="@IsFirstPage">Previous</button>
+
+        @if (TotalPages <= 10)
+        {
+            // If there are 10 or fewer pages, show all page numbers
+            @for (int i = 1; i <= TotalPages; i++)
+            {
+                var pageNumber = i; // Create a local variable to capture the current value of i
+                <button @onclick="() => GoToPage(pageNumber)" class="@(CurrentPage == pageNumber ? "active" : "")">@pageNumber</button>
+            }
+        }
+        else
+        {
+            // If there are more than 10 pages, show pagination with ellipses
+            @for (int i = 1; i <= 3; i++)
+            {
+                var pageNumber = i; // Show first three pages
+                <button @onclick="() => GoToPage(pageNumber)" class="@(CurrentPage == pageNumber ? "active" : "")">@pageNumber</button>
+            }
+
+            <span>...</span>
+
+            @for (int i = Math.Max(4, CurrentPage - 1); i <= Math.Min(CurrentPage + 1, TotalPages - 3); i++)
+            {
+                var pageNumber = i; // Show current page and one page before and after
+                <button @onclick="() => GoToPage(pageNumber)" class="@(CurrentPage == pageNumber ? "active" : "")">@pageNumber</button>
+            }
+
+            <span>...</span>
+
+            for (int i = TotalPages - 2; i <= TotalPages; i++)
+            {
+                var pageNumber = i; // Show last three pages
+                <button @onclick="() => GoToPage(pageNumber)" class="@(CurrentPage == pageNumber ? "active" : "")">@pageNumber</button>
+            }
+        }
+
+        <button @onclick="NextPage" disabled="@IsLastPage">Next</button>
+        <button @onclick="LastPage" disabled="@IsLastPage">Last</button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public DataTable DataTable { get; set; }
+
+    [Parameter]
+    public int PageSize { get; set; } = 10;
+
+    private int CurrentPage { get; set; } = 1;
+    private string filterText = "";
+
+    private int TotalPages
+    {
+        get
+        {
+            if (DataTable == null || DataTable.Rows.Count == 0)
+            {
+                return 0;
+            }
+            else
+            {
+                int totalRows = FilteredRows.Count(); // Use FilteredRows instead of DataTable.Rows
+                return (int)Math.Ceiling(totalRows / (double)PageSize);
+            }
+        }
+    }
+
+    private bool IsFirstPage => CurrentPage == 1;
+    private bool IsLastPage => CurrentPage == TotalPages;
+
+    private IEnumerable<DataRow> PagedRows => GetPagedRows();
+
+    private IEnumerable<DataRow> GetPagedRows()
+    {
+        if (DataTable == null || DataTable.Rows.Count == 0)
+        {
+            return Enumerable.Empty<DataRow>();
+        }
+
+        return FilteredRows
+                        .Skip((CurrentPage - 1) * PageSize)
+                        .Take(PageSize);
+    }
+
+    private IEnumerable<DataRow> FilteredRows
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(filterText))
+            {
+                return DataTable.AsEnumerable();
+            }
+            else
+            {
+                string filter = filterText.ToLower();
+                return DataTable.AsEnumerable().Where(row =>
+                    row.ItemArray.Any(field => field.ToString().ToLower().Contains(filter))
+                );
+            }
+        }
+    }
+
+    private void GoToPage(int pageNumber)
+    {
+        Console.WriteLine($"GoToPage called with pageNumber: {pageNumber}");
+        if (pageNumber >= 1 && pageNumber <= TotalPages)
+        {
+            CurrentPage = pageNumber;
+        }
+        else
+        {
+            Console.WriteLine($"Invalid pageNumber: {pageNumber}");
+        }
+    }
+
+    private void FirstPage()
+    {
+        CurrentPage = 1;
+    }
+
+    private void LastPage()
+    {
+        CurrentPage = TotalPages;
+    }
+
+    private void PreviousPage()
+    {
+        if (CurrentPage > 1)
+        {
+            CurrentPage--;
+        }
+    }
+
+    private void NextPage()
+    {
+        if (CurrentPage < TotalPages)
+        {
+            CurrentPage++;
+        }
+    }
+
+    private void FilterData(ChangeEventArgs e)
+    {
+        filterText = e.Value.ToString();
+        CurrentPage = 1; // Reset to first page when filtering changes
+    }
+}

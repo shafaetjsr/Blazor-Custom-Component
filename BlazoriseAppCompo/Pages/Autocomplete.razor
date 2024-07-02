@@ -1,0 +1,60 @@
+﻿@using BlazoriseAppCompo.Data
+@using GGAPost.Data.DbObject
+@using Microsoft.AspNetCore.Components.Web
+
+@inject DALService db
+
+<div class="autocomplete">
+    <label>@name</label>
+    <input value="@searchText" @oninput="OnInput" placeholder="Start typing..." />
+    @if (suggestions.Any())
+    {
+        <div class="autocomplete-suggestions">
+            @foreach (var suggestion in suggestions)
+            {
+                <div class="autocomplete-suggestion" @onclick="() => SelectSuggestion(suggestion)">
+                    @suggestion.Text
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private string searchText = string.Empty;
+    private List<SuggestionItem> suggestions = new List<SuggestionItem>();
+
+    // [Parameter]
+    // public List<SuggestionItem> Items { get; set; } = new List<SuggestionItem>();
+
+    [Parameter]
+    public EventCallback<SuggestionItem> OnSelected { get; set; }
+
+    [Parameter]
+    public string name { get; set; }
+
+    [Parameter]
+    public string sqlQuery { get; set; }
+
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        searchText = e.Value.ToString();
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            //suggestions = Items.Where(item => item.Text.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList();
+            suggestions = await db.autocomplateData(sqlQuery,searchText);
+        }
+        else
+        {
+            suggestions.Clear();
+        }
+    }
+
+    private void SelectSuggestion(SuggestionItem suggestion)
+    {
+        searchText = suggestion.Text;
+        suggestions.Clear();
+        OnSelected.InvokeAsync(suggestion);
+    }
+}
